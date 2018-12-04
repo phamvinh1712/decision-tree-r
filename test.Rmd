@@ -1,0 +1,29 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+pva97nk <- read.csv(file = "pva97nk.csv",header = TRUE)
+head(pva97nk)
+```
+
+```{r}
+keep_columns <- c("TARGET_B","DemCluster","DemAge","DemGender","DemHomeOwner","DemMedHomeValue","DemPctVeterans","DemMedIncome")
+.data = pva97nk[keep_columns]
+head(.data)
+```
+
+```{r}
+smp_size <- floor(0.75 * nrow(.data))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(.data)), size = smp_size)
+data.train <- .data[train_ind, ]
+data.test <- .data[-train_ind, ]
+head(data.train)
+head(data.test)
+```
+```{r}
+
+```
+
