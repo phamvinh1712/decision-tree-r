@@ -5,25 +5,65 @@ output: html_notebook
 
 ```{r}
 pva97nk <- read.csv(file = "pva97nk.csv",header = TRUE)
+pva97nk$TARGET_B[pva97nk$TARGET_B == 0] <- "F"
+pva97nk$TARGET_B[pva97nk$TARGET_B == 1] <- "T"
+pva97nk$TARGET_B<- as.factor(pva97nk$TARGET_B)
 head(pva97nk)
 ```
 
 ```{r}
-keep_columns <- c("TARGET_B","DemCluster","DemAge","DemGender","DemHomeOwner","DemMedHomeValue","DemPctVeterans","DemMedIncome")
+keep_columns <- c("TARGET_B","GiftCnt36","GiftTimeLast","GiftAvgLast","GiftCntAll","DemMedIncome")
 .data = pva97nk[keep_columns]
 head(.data)
 ```
 
 ```{r}
-smp_size <- floor(0.75 * nrow(.data))
 set.seed(123)
-train_ind <- sample(seq_len(nrow(.data)), size = smp_size)
-data.train <- .data[train_ind, ]
-data.test <- .data[-train_ind, ]
+assignment <- sample(1:3, size = nrow(.data), prob = c(0.7, 0.15, 0.15), replace = TRUE)
+data.train <- .data[assignment == 1, ]
+data.valid <- .data[assignment == 2, ]
+data.test <- .data[assignment == 3, ]
 head(data.train)
+head(data.valid)
 head(data.test)
 ```
 ```{r}
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+
+rpart.tree <- rpart(TARGET_B ~ GiftCnt36+GiftTimeLast+GiftAvgLast, data = data.train,method = "class",control =rpart.control(minsplit = 1,minbucket=1, cp=0))
+ctree.tree <- ctree(TARGET_B ~ GiftCnt36+GiftTimeLast+GiftAvgLast, data = data.train)
+
+plot(ctree.tree)
+fancyRpartPlot(rpart.tree)
+```
+```{r}
+pred_train_rpart <- predict(rpart.tree, data.train, type = "class")
+conf_train_rpart <- table(data.train$TARGET_B, pred_train_rpart)
+acc_train_rpart <- sum(diag(conf_train_rpart))/sum(conf_train_rpart)
+
+print(conf_train_rpart)
+print(acc_train_rpart)
+
+pred_valid_rpart <- predict(rpart.tree, data.valid, type = "class")
+conf_valid_rpart <- table(data.valid$TARGET_B, pred_valid_rpart)
+acc_valid_rpart <- sum(diag(conf_valid_rpart))/sum(conf_valid_rpart)
+
+print(conf_valid_rpart)
+print(acc_valid_rpart)
+
 
 ```
+
+```{r}
+pred_valid_ctree <- predict(ctree.tree,newdata =  data.valid)
+conf_ctree <- table(data.valid$TARGET_B, pred_valid_ctree)
+acc_ctree <- sum(diag(conf_ctree))/sum(conf_ctree)
+
+print(conf_ctree)
+print(acc_ctree)
+```
+
 
